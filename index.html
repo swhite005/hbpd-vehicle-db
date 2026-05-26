@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b1829">
+<title>HBPD Vehicle Database</title>
+<link rel="apple-touch-icon" href="https://img.icons8.com/ios-filled/100/c9a84c/police-badge.png">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:   #0b1829;
+    --navy2:  #111f33;
+    --navy3:  #172840;
+    --navy4:  #1d3050;
+    --border: #253a56;
+    --gold:   #c9a84c;
+    --gold2:  #e8c96a;
+    --red:    #e05252;
+    --green:  #4caf7d;
+    --blue:   #4f9cf9;
+    --text:   #d8e4f0;
+    --muted:  #6a8caa;
+    --white:  #f0f6ff;
+    --cond:   'Barlow Condensed', sans-serif;
+    --body:   'Barlow', sans-serif;
+    --sat: env(safe-area-inset-top, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html {
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: var(--body);
+    background: var(--navy);
+    color: var(--text);
+    height: 100%;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── HEADER ─────────────────────────── */
+  .header {
+    flex-shrink: 0;
+    background: var(--navy2);
+    border-bottom: 2px solid var(--gold);
+    padding: calc(var(--sat) + 14px) calc(var(--sar) + 16px) 14px calc(var(--sal) + 16px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 200;
+  }
+  .hbpd-badge {
+    background: var(--gold); color: var(--navy);
+    font-family: var(--cond); font-weight: 800; font-size: 0.75rem;
+    letter-spacing: 0.14em; padding: 5px 9px; border-radius: 3px; flex-shrink: 0;
+  }
+  .header-title {
+    font-family: var(--cond); font-size: 1.1rem; font-weight: 700;
+    color: var(--white); letter-spacing: 0.04em; text-transform: uppercase; line-height: 1.1;
+  }
+  .header-title span {
+    display: block; font-size: 0.67rem; color: var(--muted);
+    font-weight: 400; letter-spacing: 0.08em; margin-top: 1px;
+  }
+  .filter-toggle-btn {
+    margin-left: auto; background: var(--navy3); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; cursor: pointer; flex-shrink: 0; position: relative;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .filter-toggle-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold); }
+  .filter-badge {
+    position: absolute; top: -5px; right: -5px;
+    background: var(--gold); color: var(--navy); border-radius: 50%;
+    width: 18px; height: 18px; font-size: 0.65rem; font-weight: 700;
+    align-items: center; justify-content: center; display: none;
+    font-family: var(--cond);
+  }
+  .filter-badge.show { display: flex; }
+
+  /* ── STATS ──────────────────────────── */
+  .statsbar {
+    flex-shrink: 0;
+    background: var(--navy3); border-bottom: 1px solid var(--border);
+    padding: 10px calc(var(--sar) + 16px) 10px calc(var(--sal) + 16px);
+    display: grid; grid-template-columns: repeat(5, 1fr);
+  }
+  .stat { text-align: center; padding: 3px 0; border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: none; }
+  .stat-val { display: block; font-family: var(--cond); font-size: 1.4rem; font-weight: 800; color: var(--gold); line-height: 1; }
+  .stat-lbl { display: block; font-size: 0.55rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; line-height: 1.2; }
+
+  /* ── TABS ───────────────────────────── */
+  .tabs {
+    flex-shrink: 0;
+    background: var(--navy2); border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+  }
+  .tab {
+    padding: 14px 8px; text-align: center; cursor: pointer;
+    font-family: var(--cond); font-size: 0.88rem; font-weight: 700;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 3px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+    user-select: none;
+  }
+  .tab:active { background: rgba(255,255,255,0.03); }
+  .tab.active-all  { color: var(--white); border-bottom-color: var(--blue); }
+  .tab.active-mech { color: var(--gold);  border-bottom-color: var(--gold); }
+  .tab.active-dmg  { color: var(--red);   border-bottom-color: var(--red); }
+  .tab-count { font-size: 0.7rem; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+  .tab-count-all  { background: rgba(79,156,249,0.15);  color: var(--blue); }
+  .tab-count-mech { background: rgba(201,168,76,0.15);  color: var(--gold); }
+  .tab-count-dmg  { background: rgba(224,82,82,0.15);   color: var(--red); }
+
+  /* ── SEARCH ─────────────────────────── */
+  .searchbar {
+    flex-shrink: 0;
+    padding: 10px calc(var(--sar) + 14px) 10px calc(var(--sal) + 14px);
+    background: var(--navy2); border-bottom: 1px solid var(--border);
+    display: flex; gap: 8px; align-items: center;
+  }
+  .search-wrap { position: relative; flex: 1; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 1rem; pointer-events: none; }
+  input[type="search"], input[type="text"] {
+    width: 100%; background: var(--navy3); border: 1px solid var(--border);
+    color: var(--text); border-radius: 12px; padding: 12px 38px 12px 36px;
+    font-family: var(--body); font-size: 16px; outline: none;
+    -webkit-appearance: none; appearance: none;
+    transition: border-color 0.15s;
+  }
+  input[type="search"]::-webkit-search-cancel-button { display: none; }
+  input[type="search"]:focus, input[type="text"]:focus { border-color: var(--gold); }
+  input::placeholder { color: var(--muted); }
+  .clear-search {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: var(--navy4); border: none; color: var(--muted); font-size: 0.85rem;
+    cursor: pointer; display: none; padding: 4px 6px; border-radius: 50%;
+    width: 24px; height: 24px; align-items: center; justify-content: center;
+  }
+  .clear-search.show { display: flex; }
+  .result-pill {
+    background: var(--navy3); border: 1px solid var(--border); border-radius: 20px;
+    padding: 7px 11px; font-size: 0.75rem; color: var(--muted); white-space: nowrap; flex-shrink: 0;
+  }
+  .result-pill strong { color: var(--gold2); }
+
+  /* ── FILTER DRAWER ───────────────────── */
+  .filter-drawer {
+    flex-shrink: 0;
+    background: var(--navy2); border-bottom: 2px solid var(--border);
+    overflow: hidden; max-height: 0; transition: max-height 0.3s ease;
+  }
+  .filter-drawer.open { max-height: 360px; }
+  .filter-inner { padding: 14px calc(var(--sar) + 16px) 16px calc(var(--sal) + 16px); display: flex; flex-direction: column; gap: 10px; }
+  .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .filter-row.single { grid-template-columns: 1fr; }
+  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  .filter-label { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-family: var(--cond); font-weight: 600; }
+  select {
+    background: var(--navy3); border: 1px solid var(--border); color: var(--text);
+    border-radius: 12px; padding: 12px 32px 12px 14px;
+    font-family: var(--body); font-size: 16px; width: 100%; outline: none; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236a8caa'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    transition: border-color 0.15s;
+  }
+  select:focus { border-color: var(--gold); }
+  .filter-actions { display: flex; gap: 8px; }
+  .btn-clear-all {
+    flex: 1; background: none; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 12px; padding: 12px; font-family: var(--body); font-size: 1rem; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-apply {
+    flex: 1; background: var(--gold); border: none; color: var(--navy);
+    border-radius: 12px; padding: 12px; font-family: var(--cond); font-size: 1rem;
+    font-weight: 700; letter-spacing: 0.06em; cursor: pointer;
+  }
+  .btn-apply:active { background: var(--gold2); }
+
+  /* ── SORT CHIPS ─────────────────────── */
+  .sort-bar {
+    flex-shrink: 0;
+    padding: 8px calc(var(--sar) + 14px) 8px calc(var(--sal) + 14px);
+    display: flex; gap: 6px; overflow-x: auto;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    border-bottom: 1px solid var(--border); background: var(--navy);
+  }
+  .sort-bar::-webkit-scrollbar { display: none; }
+  .sort-chip {
+    flex-shrink: 0; background: var(--navy3); border: 1px solid var(--border);
+    color: var(--muted); border-radius: 20px; padding: 7px 14px; font-size: 0.78rem;
+    cursor: pointer; white-space: nowrap; font-family: var(--body);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    user-select: none;
+  }
+  .sort-chip.active { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+
+  /* ── SCROLLABLE CARD AREA ───────────── */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    padding-bottom: calc(var(--sab) + 20px);
+  }
+
+  /* ── CARDS ──────────────────────────── */
+  .card-list { padding: 12px calc(var(--sar) + 14px) 4px calc(var(--sal) + 14px); display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    background: var(--navy2); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; cursor: pointer;
+    transition: transform 0.1s;
+    animation: cardIn 0.18s ease both;
+  }
+  .card:active { transform: scale(0.98); }
+  .card.damage     { border-left: 4px solid var(--red); }
+  .card.mechanical { border-left: 4px solid var(--gold); }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card-top { padding: 13px 14px 10px; display: flex; align-items: flex-start; gap: 10px; }
+  .card-type-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .damage .card-type-dot     { background: var(--red);  box-shadow: 0 0 7px rgba(224,82,82,0.55); }
+  .mechanical .card-type-dot { background: var(--gold); box-shadow: 0 0 7px rgba(201,168,76,0.45); }
+  .card-main { flex: 1; min-width: 0; }
+  .card-vehicle { font-family: var(--cond); font-size: 1.25rem; font-weight: 800; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-meta { font-size: 0.78rem; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+  .card-date { font-family: var(--cond); font-size: 0.82rem; color: var(--gold2); white-space: nowrap; }
+
+  .badge { font-family: var(--cond); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.07em; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; white-space: nowrap; }
+  .badge-damage   { background: rgba(224,82,82,0.15);   color: var(--red);   border: 1px solid rgba(224,82,82,0.3); }
+  .badge-mech     { background: rgba(201,168,76,0.12);  color: var(--gold);  border: 1px solid rgba(201,168,76,0.3); }
+  .badge-received { background: rgba(76,175,125,0.15);  color: var(--green); border: 1px solid rgba(76,175,125,0.3); }
+  .badge-pending  { background: rgba(106,140,170,0.1);  color: var(--muted); border: 1px solid rgba(106,140,170,0.2); }
+  .badge-oos      { background: rgba(224,82,82,0.12);   color: var(--red);   border: 1px solid rgba(224,82,82,0.25); }
+
+  .card-body { padding: 0 14px 12px 33px; font-size: 0.82rem; color: var(--muted); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .card-footer { padding: 9px 14px; background: var(--navy3); border-top: 1px solid var(--border); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .chip { font-size: 0.72rem; color: var(--muted); background: var(--navy4); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px; white-space: nowrap; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+  .chip-arrow { margin-left: auto; color: var(--muted); font-size: 1rem; }
+
+  mark { background: rgba(201,168,76,0.28); color: var(--gold2); border-radius: 2px; padding: 0 1px; }
+
+  /* ── STATE MESSAGES ─────────────────── */
+  .state-msg { text-align: center; padding: 70px 24px; color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+  .state-msg .icon { font-size: 2.8rem; display: block; margin-bottom: 12px; }
+  .spinner { display: inline-block; width: 26px; height: 26px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── BOTTOM SHEET ───────────────────── */
+  .sheet-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0); z-index: 400;
+    transition: background 0.25s;
+  }
+  .sheet-overlay.open { display: block; background: rgba(0,0,0,0.65); }
+  .sheet {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--navy2);
+    border-top: 2px solid var(--gold);
+    border-radius: 22px 22px 0 0;
+    max-height: 92dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    padding: 0 calc(var(--sar) + 20px) calc(var(--sab) + 24px) calc(var(--sal) + 20px);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .sheet-overlay.open .sheet { transform: translateY(0); }
+
+  .sheet-handle-wrap { display: flex; justify-content: center; padding: 14px 0 8px; cursor: pointer; }
+  .sheet-handle-bar { width: 42px; height: 4px; background: var(--border); border-radius: 2px; }
+  .sheet-header { padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 18px; }
+  .sheet-vehicle { font-family: var(--cond); font-size: 2.4rem; font-weight: 800; color: var(--white); line-height: 1; }
+  .sheet-sub { margin-top: 8px; display: flex; gap: 7px; flex-wrap: wrap; align-items: center; }
+
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .detail-field { background: var(--navy3); border: 1px solid var(--border); border-radius: 12px; padding: 11px 13px; }
+  .detail-field.full { grid-column: 1 / -1; }
+  .detail-field label { display: block; font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; font-family: var(--cond); font-weight: 600; }
+  .detail-field .dval { font-size: 0.9rem; color: var(--text); line-height: 1.4; }
+  .detail-field .dval.empty { color: var(--muted); font-style: italic; }
+
+  .desc-block { background: var(--navy3); border: 1px solid var(--border); border-left: 4px solid var(--gold); border-radius: 0 12px 12px 0; padding: 14px 16px; font-size: 0.9rem; line-height: 1.65; color: var(--text); margin-bottom: 10px; }
+  .repair-block { background: rgba(76,175,125,0.07); border: 1px solid rgba(76,175,125,0.25); border-radius: 12px; padding: 13px 15px; font-size: 0.88rem; color: var(--green); display: flex; gap: 9px; align-items: flex-start; margin-bottom: 10px; }
+  .photo-btn { display: flex; align-items: center; justify-content: center; gap: 9px; width: 100%; background: rgba(79,156,249,0.08); border: 1px solid rgba(79,156,249,0.28); border-radius: 12px; padding: 15px; color: var(--blue); font-family: var(--cond); font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; text-decoration: none; }
+  .photo-btn:active { background: rgba(79,156,249,0.16); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="hbpd-badge">HBPD</div>
+  <div class="header-title">
+    Vehicle Database
+    <span>Service &amp; Damage Reports</span>
+  </div>
+  <button class="filter-toggle-btn" id="filterToggle" onclick="toggleFilters()">
+    ⚙
+    <span class="filter-badge" id="filterBadge"></span>
+  </button>
+</div>
+
+<!-- STATS -->
+<div class="statsbar">
+  <div class="stat"><span class="stat-val" id="s-total">—</span><span class="stat-lbl">Total</span></div>
+  <div class="stat"><span class="stat-val" id="s-damage" style="color:var(--red)">—</span><span class="stat-lbl">Damage</span></div>
+  <div class="stat"><span class="stat-val" id="s-mech" style="color:var(--gold)">—</span><span class="stat-lbl">Mech</span></div>
+  <div class="stat"><span class="stat-val" id="s-oos" style="color:var(--muted)">—</span><span class="stat-lbl">Out of Svc</span></div>
+  <div class="stat"><span class="stat-val" id="s-recv" style="color:var(--green)">—</span><span class="stat-lbl">Recv'd</span></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active-all" id="tab-all" onclick="setTab('all')">
+    All <span class="tab-count tab-count-all" id="tc-all">—</span>
+  </div>
+  <div class="tab" id="tab-mechanical" onclick="setTab('mechanical')">
+    Mechanical <span class="tab-count tab-count-mech" id="tc-mech">—</span>
+  </div>
+  <div class="tab" id="tab-damage" onclick="setTab('damage')">
+    Damage <span class="tab-count tab-count-dmg" id="tc-dmg">—</span>
+  </div>
+</div>
+
+<!-- SEARCH -->
+<div class="searchbar">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="search" id="searchInput" placeholder="Search vehicle, officer, issue..." oninput="onSearch()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="clear-search" id="clearSearch" onclick="clearSearch()">✕</button>
+  </div>
+  <div class="result-pill" id="resultPill"><strong>—</strong></div>
+</div>
+
+<!-- FILTER DRAWER -->
+<div class="filter-drawer" id="filterDrawer">
+  <div class="filter-inner">
+    <div class="filter-row">
+      <div class="filter-group">
+        <span class="filter-label">Out of Service</span>
+        <select id="oosFilter" onchange="applyFilters()">
+          <option value="">All</option>
+          <option value="Yes">Out of Service</option>
+          <option value="No">In Service</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Status</span>
+        <select id="statusFilter" onchange="applyFilters()">
+          <option value="">All Statuses</option>
+          <option value="Received">Received</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-row single">
+      <div class="filter-group">
+        <span class="filter-label">Vehicle</span>
+        <select id="vehicleFilter" onchange="applyFilters()">
+          <option value="">All Vehicles</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn-clear-all" onclick="clearAllFilters()">Clear All</button>
+      <button class="btn-apply" onclick="toggleFilters()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- SORT CHIPS -->
+<div class="sort-bar">
+  <div class="sort-chip active" onclick="sortChip(this,0,-1)">Newest First</div>
+  <div class="sort-chip" onclick="sortChip(this,0,1)">Oldest First</div>
+  <div class="sort-chip" onclick="sortChip(this,3,1)">Vehicle #</div>
+  <div class="sort-chip" onclick="sortChip(this,1,1)">Officer A–Z</div>
+</div>
+
+<!-- SCROLLABLE CARD LIST -->
+<div class="scroll-area" id="scrollArea">
+  <div id="cardList">
+    <div class="state-msg"><span class="spinner"></span> Loading reports...</div>
+  </div>
+</div>
+
+<!-- DETAIL SHEET -->
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet(event)">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle-wrap" onclick="closeSheetDirect()">
+      <div class="sheet-handle-bar"></div>
+    </div>
+    <div class="sheet-header">
+      <div class="sheet-vehicle" id="sh-vehicle"></div>
+      <div class="sheet-sub" id="sh-sub"></div>
+    </div>
+    <div id="sh-body"></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────
+const SHEET_CSV_URL =
+  'https://docs.google.com/spreadsheets/d/1W9e5SCjuGqcgMoj2vlY6IRKV-Eicwrxf1T-U0dQZVTs/gviz/tq?tqx=out:csv&sheet=Main';
+
+const COL = {
+  date:0, employee:1, type:2, vehicle:3, other:4,
+  problem:5, damloc:6, damtype:7, photo:8, supervisor:9,
+  dr:10, desc:11, oos:12, repair:13, status:14
+};
+
+// ── STATE ────────────────────────────────────────────────────────
+let allRows      = [];
+let filteredRows = [];
+let activeTab    = 'all';
+let sortCol      = 0;
+let sortDir      = -1;
+let touchStartY  = 0;
+
+// ── SWIPE DOWN TO CLOSE SHEET ────────────────────────────────────
+const sheetEl = document.getElementById('sheet');
+sheetEl.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+sheetEl.addEventListener('touchend',   e => {
+  if (e.changedTouches[0].clientY - touchStartY > 80) closeSheetDirect();
+}, { passive: true });
+
+// ── LOAD DATA FROM GOOGLE SHEETS CSV ─────────────────────────────
+async function loadData() {
+  try {
+    const res  = await fetch(SHEET_CSV_URL);
+    const text = await res.text();
+    const rows = parseCSV(text);
+
+    // Row 0 = "New Entry:" label row, Row 1 = headers, Row 2+ = data
+    // Skip first two rows, filter out empty
+    allRows = rows.slice(2).filter(r => r[COL.date] && r[COL.date].trim() !== '');
+
+    init();
+  } catch (err) {
+    document.getElementById('cardList').innerHTML =
+      `<div class="state-msg"><span class="icon">⚠️</span>Could not load data.<br><small>${err.message}</small></div>`;
+  }
+}
+
+// Simple but robust CSV parser (handles quoted fields with commas/newlines)
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], n = text[i+1];
+    if (inQ) {
+      if (c === '"' && n === '"') { field += '"'; i++; }
+      else if (c === '"') inQ = false;
+      else field += c;
+    } else {
+      if (c === '"') { inQ = true; }
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\r' || c === '\n') {
+        if (c === '\r' && n === '\n') i++;
+        row.push(field); field = '';
+        if (row.some(f => f.trim())) rows.push(row);
+        row = [];
+      } else { field += c; }
+    }
+  }
+  if (field || row.length) { row.push(field); if (row.some(f => f.trim())) rows.push(row); }
+  return rows;
+}
+
+function vehicleLabel(row) {
+  const v = (row[COL.vehicle] || '').trim();
+  return (v === 'Other' || v === '') ? (row[COL.other] || 'Unknown').trim() : v;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+function init() {
+  document.getElementById('s-total').textContent  = allRows.length;
+  document.getElementById('s-damage').textContent = allRows.filter(r => r[COL.type] === 'Damage').length;
+  document.getElementById('s-mech').textContent   = allRows.filter(r => r[COL.type] === 'Mechanical').length;
+  document.getElementById('s-oos').textContent    = allRows.filter(r => r[COL.oos] === 'Yes').length;
+  document.getElementById('s-recv').textContent   = allRows.filter(r => r[COL.status] === 'Received').length;
+
+  document.getElementById('tc-all').textContent  = allRows.length;
+  document.getElementById('tc-mech').textContent = allRows.filter(r => r[COL.type] === 'Mechanical').length;
+  document.getElementById('tc-dmg').textContent  = allRows.filter(r => r[COL.type] === 'Damage').length;
+
+  const vehicles = [...new Set(allRows.map(vehicleLabel))].sort((a,b) =>
+    a.localeCompare(b, undefined, { numeric: true })
+  );
+  const vSel = document.getElementById('vehicleFilter');
+  vehicles.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v; vSel.appendChild(o);
+  });
+
+  applyFilters();
+}
+
+// ── TABS ─────────────────────────────────────────────────────────
+function setTab(tab) {
+  activeTab = tab;
+  document.getElementById('tab-all').className        = 'tab' + (tab === 'all'        ? ' active-all'  : '');
+  document.getElementById('tab-mechanical').className = 'tab' + (tab === 'mechanical' ? ' active-mech' : '');
+  document.getElementById('tab-damage').className     = 'tab' + (tab === 'damage'     ? ' active-dmg'  : '');
+  document.getElementById('scrollArea').scrollTop = 0;
+  applyFilters();
+}
+
+// ── SEARCH ───────────────────────────────────────────────────────
+function onSearch() {
+  const v = document.getElementById('searchInput').value;
+  document.getElementById('clearSearch').classList.toggle('show', v.length > 0);
+  applyFilters();
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearSearch').classList.remove('show');
+  applyFilters();
+}
+
+// ── FILTER DRAWER ────────────────────────────────────────────────
+function toggleFilters() {
+  const drawer = document.getElementById('filterDrawer');
+  const btn    = document.getElementById('filterToggle');
+  drawer.classList.toggle('open');
+  btn.classList.toggle('active', drawer.classList.contains('open') || countActiveFilters() > 0);
+}
+function countActiveFilters() {
+  return ['oosFilter','statusFilter','vehicleFilter'].filter(id => document.getElementById(id).value).length;
+}
+function clearAllFilters() {
+  ['oosFilter','statusFilter','vehicleFilter'].forEach(id => document.getElementById(id).value = '');
+  applyFilters();
+}
+
+// ── APPLY ALL FILTERS + SORT ──────────────────────────────────────
+function applyFilters() {
+  const q        = document.getElementById('searchInput').value.trim().toLowerCase();
+  const oosF     = document.getElementById('oosFilter').value;
+  const statusF  = document.getElementById('statusFilter').value;
+  const vehicleF = document.getElementById('vehicleFilter').value;
+
+  let rows = allRows;
+  if (activeTab === 'mechanical') rows = rows.filter(r => r[COL.type] === 'Mechanical');
+  if (activeTab === 'damage')     rows = rows.filter(r => r[COL.type] === 'Damage');
+  if (q)        rows = rows.filter(r => r.some(c => (c||'').toLowerCase().includes(q)));
+  if (oosF)     rows = rows.filter(r => r[COL.oos] === oosF);
+  if (vehicleF) rows = rows.filter(r => vehicleLabel(r) === vehicleF);
+  if (statusF === 'Received') rows = rows.filter(r => r[COL.status] === 'Received');
+  if (statusF === 'Pending')  rows = rows.filter(r => r[COL.status] !== 'Received');
+
+  filteredRows = [...rows].sort((a, b) => {
+    const va = (a[sortCol]||''), vb = (b[sortCol]||'');
+    return va.localeCompare(vb, undefined, { numeric: true }) * sortDir;
+  });
+
+  const fc = countActiveFilters();
+  const badge = document.getElementById('filterBadge');
+  badge.textContent = fc || '';
+  badge.classList.toggle('show', fc > 0);
+  document.getElementById('filterToggle').classList.toggle('active',
+    document.getElementById('filterDrawer').classList.contains('open') || fc > 0);
+
+  renderCards(filteredRows, q);
+  document.getElementById('resultPill').innerHTML = `<strong>${filteredRows.length}</strong>`;
+}
+
+// ── SORT ─────────────────────────────────────────────────────────
+function sortChip(el, col, dir) {
+  document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  sortCol = col; sortDir = dir;
+  applyFilters();
+}
+
+// ── RENDER CARDS ─────────────────────────────────────────────────
+function renderCards(rows, highlight) {
+  const list = document.getElementById('cardList');
+  if (!rows.length) {
+    list.innerHTML = `<div class="state-msg"><span class="icon">🔍</span>No records match.</div>`;
+    return;
+  }
+  const hl = text => {
+    if (!highlight || !text) return esc(text);
+    return esc(text).replace(new RegExp(`(${escRe(highlight)})`, 'gi'), '<mark>$1</mark>');
+  };
+
+  let html = '<div class="card-list">';
+  rows.forEach((row, i) => {
+    const type      = row[COL.type] || '';
+    const vLabel    = vehicleLabel(row);
+    const oos       = row[COL.oos] || '';
+    const status    = row[COL.status] || '';
+    const typeClass = type === 'Damage' ? 'damage' : 'mechanical';
+
+    const typeBadge = activeTab === 'all'
+      ? (type === 'Damage'
+          ? '<span class="badge badge-damage">Damage</span>'
+          : '<span class="badge badge-mech">Mechanical</span>')
+      : '';
+
+    const statusBadge = status === 'Received'
+      ? '<span class="badge badge-received">✓ Received</span>'
+      : '<span class="badge badge-pending">Pending</span>';
+
+    const oosBadge = oos === 'Yes'
+      ? '<span class="badge badge-oos">⚠ Out of Service</span>'
+      : '';
+
+    let chips = '';
+    if (row[COL.problem]) chips += `<span class="chip">${esc(row[COL.problem])}</span>`;
+    if (row[COL.dr])      chips += `<span class="chip">DR ${esc(row[COL.dr])}</span>`;
+
+    html += `
+    <div class="card ${typeClass}" onclick="openSheet(${i})">
+      <div class="card-top">
+        <div class="card-type-dot"></div>
+        <div class="card-main">
+          <div class="card-vehicle">${hl(vLabel)}</div>
+          <div class="card-meta">${hl(row[COL.employee] || '')}</div>
+        </div>
+        <div class="card-right">
+          <div class="card-date">${esc(row[COL.date] || '')}</div>
+          ${typeBadge}
+        </div>
+      </div>
+      ${row[COL.desc] ? `<div class="card-body">${hl(row[COL.desc])}</div>` : ''}
+      <div class="card-footer">
+        ${statusBadge}${oosBadge}${chips}
+        <span class="chip-arrow">›</span>
+      </div>
+    </div>`;
+  });
+
+  html += '</div>';
+  list.innerHTML = html;
+}
+
+// ── DETAIL SHEET ─────────────────────────────────────────────────
+function openSheet(idx) {
+  const row = filteredRows[idx];
+  if (!row) return;
+
+  const vLabel = vehicleLabel(row);
+  const type   = row[COL.type] || '';
+  const status = row[COL.status] || '';
+  const oos    = row[COL.oos] || '';
+
+  document.getElementById('sh-vehicle').textContent = vLabel || '—';
+  document.getElementById('sh-sub').innerHTML =
+    `<span style="color:var(--muted);font-size:0.82rem">${esc(row[COL.date]||'')}</span>
+     ${type === 'Damage' ? '<span class="badge badge-damage">Damage</span>' : '<span class="badge badge-mech">Mechanical</span>'}
+     ${status === 'Received' ? '<span class="badge badge-received">✓ Received</span>' : '<span class="badge badge-pending">Pending</span>'}
+     ${oos === 'Yes' ? '<span class="badge badge-oos">⚠ Out of Service</span>' : ''}`;
+
+  let b = '';
+
+  b += `<div class="detail-grid">
+    <div class="detail-field"><label>Reported By</label><div class="dval">${dval(row[COL.employee])}</div></div>
+    <div class="detail-field"><label>Supervisor</label><div class="dval">${dval(row[COL.supervisor])}</div></div>
+    <div class="detail-field"><label>Problem Area</label><div class="dval">${dval(row[COL.problem])}</div></div>
+    <div class="detail-field"><label>DR / CN #</label><div class="dval">${dval(row[COL.dr])}</div></div>`;
+
+  if (type === 'Damage') {
+    b += `<div class="detail-field"><label>Damage Location</label><div class="dval">${dval(row[COL.damloc])}</div></div>
+          <div class="detail-field"><label>Damage Type</label><div class="dval">${dval(row[COL.damtype])}</div></div>`;
+  }
+
+  b += `<div class="detail-field"><label>Out of Service</label><div class="dval">${
+    oos === 'Yes'
+      ? '<span style="color:var(--red);font-weight:600">⚠ Yes</span>'
+      : '<span style="color:var(--muted)">No</span>'
+  }</div></div>
+  <div class="detail-field"><label>Status</label><div class="dval">${
+    status === 'Received'
+      ? '<span class="badge badge-received">✓ Received</span>'
+      : '<span class="badge badge-pending">Pending</span>'
+  }</div></div>
+  </div>`;
+
+  if (row[COL.desc])   b += `<div class="desc-block">${esc(row[COL.desc])}</div>`;
+  if (row[COL.repair]) b += `<div class="repair-block">🔧 <span>${esc(row[COL.repair])}</span></div>`;
+  if (row[COL.photo])  b += `<a class="photo-btn" href="${esc(row[COL.photo])}" target="_blank">📷 View Photo</a>`;
+
+  document.getElementById('sh-body').innerHTML = b;
+  document.getElementById('sheet').scrollTop = 0;
+  document.getElementById('sheetOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSheet(e) {
+  if (e.target === document.getElementById('sheetOverlay')) closeSheetDirect();
+}
+function closeSheetDirect() {
+  document.getElementById('sheetOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────
+function dval(v) {
+  const s = (v||'').trim();
+  return s ? `<span>${esc(s)}</span>` : `<span class="empty" style="color:var(--muted);font-style:italic">—</span>`;
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+// ── START ─────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
