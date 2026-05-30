@@ -491,8 +491,10 @@ function loadArchive(type) {
     // Populate total count
     document.getElementById('s-total').textContent = allRows.length;
 
-    // Populate vehicle dropdown from actual data
-    const vehicles = [...new Set(allRows.map(vehicleLabel))].sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
+    // Populate vehicle dropdown from column D only — skip blank and "Other"
+    const vehicles = [...new Set(
+      allRows.map(r => r[COL.vehicle]).filter(v => v && v !== 'Other')
+    )].sort((a,b) => a.localeCompare(b, undefined, {numeric:true}));
     const sel = document.getElementById('archVehicleSelect');
     sel.innerHTML = '<option value="">— Choose a vehicle —</option>';
     vehicles.forEach(v => {
@@ -513,7 +515,7 @@ function onArchVehicleChange() {
       `<div class="arch-prompt"><span class="icon">🚗</span>Select a vehicle above to view its history.</div>`;
     return;
   }
-  const rows = allRows.filter(r => vehicleLabel(r) === v);
+  const rows = allRows.filter(r => r[COL.vehicle] === v);
   filteredRows = [...rows].sort((a, b) => {
     const parseMDY = s => { const p = s.split('/'); return p.length===3 ? new Date(p[2],p[0]-1,p[1]) : new Date(0); };
     return (parseMDY(b[0]) - parseMDY(a[0])); // newest first
