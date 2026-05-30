@@ -51,6 +51,8 @@
   .btn-arch-svc:active  { background: rgba(76,175,125,0.1); }
   .btn-arch-dmg  { border-color: rgba(224,82,82,0.35);   color: var(--red); }
   .btn-arch-dmg:active  { background: rgba(224,82,82,0.1); }
+  .btn-new-entry { border-color: rgba(201,168,76,0.5); color: var(--gold); text-decoration: none; display: inline-flex; align-items: center; }
+  .btn-new-entry:active { background: rgba(201,168,76,0.12); }
 
   /* ARCHIVE BANNER */
   .archive-banner {
@@ -291,6 +293,7 @@
     <span>Service &amp; Damage Reports</span>
   </div>
   <div class="header-btns">
+    <a class="btn-arch btn-new-entry" href="https://hbpd.apexforms.net/vehicle-service-damage-report/?wpsecret=87433d785987d2913490c72ed10c7f00&user_id=7835" target="_blank">&#43; New Entry</a>
     <button class="btn-arch btn-arch-svc" onclick="loadArchive('service')">&#128193; Archived Mech</button>
     <button class="btn-arch btn-arch-dmg" onclick="loadArchive('damage')">&#128193; Archived Damage</button>
   </div>
@@ -469,7 +472,7 @@ function loadArchive(type) {
   const banner = document.getElementById('archiveBanner');
   banner.className = 'archive-banner show' + (type === 'damage' ? ' dmg' : '');
   document.getElementById('archiveTitle').textContent = type === 'service'
-    ? '📁 Archived Mechanical — Service Complete'
+    ? '📁 Archived Mechanical — Service Completed'
     : '📁 Archived Damage — Damage Repaired';
   document.getElementById('statsbar').className = 'statsbar archive-mode';
   document.getElementById('archPicker').classList.add('show');
@@ -688,7 +691,7 @@ function renderCards(rows, highlight) {
       : '<span class="badge badge-mech">Mechanical</span>';
     let statusBadge;
     if (status === 'Received')         statusBadge = '<span class="badge badge-received">✓ Received</span>';
-    else if (status === 'Service Complete' || status === 'Damage Repaired')
+    else if (status === 'Service Completed' || status === 'Damage Repaired')
                                        statusBadge = '<span class="badge badge-complete">✓ Complete</span>';
     else if (status)                   statusBadge = `<span class="badge badge-pending">${esc(status)}</span>`;
     else                               statusBadge = '<span class="badge badge-pending">Pending</span>';
@@ -735,7 +738,7 @@ function openSheet(idx) {
     : '<span class="badge badge-mech">Mechanical</span>';
   let statusBadge;
   if (status === 'Received')                                         statusBadge = '<span class="badge badge-received">✓ Received</span>';
-  else if (status === 'Service Complete' || status === 'Damage Repaired') statusBadge = '<span class="badge badge-complete">✓ Complete</span>';
+  else if (status === 'Service Completed' || status === 'Damage Repaired') statusBadge = '<span class="badge badge-complete">✓ Complete</span>';
   else if (status)                                                    statusBadge = `<span class="badge badge-pending">${esc(status)}</span>`;
   else                                                                statusBadge = '<span class="badge badge-pending">Pending</span>';
   const oosBadge = oos === 'Yes' ? '<span class="badge badge-oos">⚠ Out of Service</span>' : '';
